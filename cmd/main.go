@@ -30,7 +30,13 @@ func init() {
 
 // Data Addon data passed in the secret.
 type Data struct {
-	Filter api.Map
+	// Action
+	// - import
+	// - fetch
+	// - generate
+	Action string `json:"action"`
+	// Filter applications.
+	Filter api.Map `json:"filter"`
 }
 
 // main
@@ -56,16 +62,21 @@ func main() {
 			}
 		}
 		//
-		// Fetch application.
-		addon.Activity("Fetching application.")
-		_, err = addon.Task.Application()
+		// SSH
+		agent := ssh.Agent{}
+		err = agent.Start()
 		if err != nil {
 			return
 		}
 		//
-		// SSH
-		agent := ssh.Agent{}
-		err = agent.Start()
+		// action
+		action, err := NewAction(d)
+		if err != nil {
+			return
+		}
+		//
+		// Run action
+		err = action.Run(d)
 		if err != nil {
 			return
 		}
