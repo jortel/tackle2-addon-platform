@@ -22,7 +22,12 @@ func (a *Generate) Run(d *Data) (err error) {
 	if err != nil {
 		return
 	}
+	addon.Activity(
+		"[Gen] Fetch manifest for application (id=%d): %s",
+		a.application.ID,
+		a.application.Name)
 	if a.application.Assets == nil {
+		addon.Failed("[Gen] not asset repository defined.")
 		return
 	}
 	assetRepo, err := repository.New(
@@ -42,6 +47,10 @@ func (a *Generate) Run(d *Data) (err error) {
 	}
 	paths := []string{}
 	for _, gen := range generators {
+		addon.Activity(
+			"[Gen] Using generator (id=%d): %s.",
+			gen.ID,
+			gen.Name)
 		var templateDir string
 		templateDir, err = a.fetchTemplates(gen)
 		if err != nil {
@@ -57,6 +66,9 @@ func (a *Generate) Run(d *Data) (err error) {
 			names...)
 	}
 	err = assetRepo.Commit(paths, "Generated.")
+	if err != nil {
+		return
+	}
 	return
 }
 
@@ -75,17 +87,31 @@ func (a *Generate) generate(gen *api.Generator, templateDir string) (paths []str
 		}
 	}
 	for name, content := range files {
-		var f *os.File
-		f, err = os.Create(path.Join(AssetDir, name))
-		if err != nil {
+		err = a.write(name, content)
+		if err == nil {
+			paths = append(paths, name)
+		} else {
 			return
 		}
-		_, err = f.Write([]byte(content))
-		if err != nil {
-			return
-		}
-		paths = append(paths, name)
 	}
+	return
+}
+
+func (a *Generate) write(name, content string) (err error) {
+	f, err := os.Create(path.Join(AssetDir, name))
+	if err != nil {
+		return
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+	_, err = f.Write([]byte(content))
+	if err != nil {
+		return
+	}
+	addon.Activity(
+		"[Gen] created: %s",
+		f.Name())
 	return
 }
 
