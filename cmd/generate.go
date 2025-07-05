@@ -110,6 +110,9 @@ func (a *Generate) values(gen *api.Generator) (vMap api.Map, err error) {
 		return
 	}
 	err = json.Unmarshal(b, &vMap)
+	if err != nil {
+		return
+	}
 	return
 }
 

@@ -33,9 +33,8 @@ func (p *Provider) Fetch(application *api.Application) (m *api.Manifest, err err
 	if err != nil {
 		return
 	}
-	manifest, nErr := client.Discover(ref)
-	if nErr != nil {
-		err = nErr
+	manifest, err := client.Discover(ref)
+	if err != nil {
 		return
 	}
 	m = &api.Manifest{}
