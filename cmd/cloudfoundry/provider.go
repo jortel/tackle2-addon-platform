@@ -110,8 +110,8 @@ type Filter struct {
 }
 
 func (f *Filter) MatchSpace(name string) (match bool) {
-	for _, pattern := range f.Spaces {
-		match, _ = filepath.Match(pattern, name)
+	for _, s := range f.Spaces {
+		match = s == name
 		if match {
 			break
 		}
