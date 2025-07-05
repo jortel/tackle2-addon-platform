@@ -32,7 +32,7 @@ func (a *Fetch) Run(d *Data) (err error) {
 			p.Identity, err = addon.Identity.Get(a.platform.Identity.ID)
 			if err == nil {
 				addon.Activity(
-					"[Fetch] Using identity (id=%d): %s",
+					"[Fetch] Using credentials (id=%d): %s",
 					p.Identity.ID,
 					p.Identity.Name)
 			} else {

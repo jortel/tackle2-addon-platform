@@ -14,6 +14,8 @@ require (
 
 replace github.com/konveyor/tackle2-hub => github.com/jortel/tackle2-hub v0.0.0-20250705181441-9c08d48947e5
 
+replace github.com/konveyor/tackle2-addon => github.com/jortel/tackle2-addon v0.0.0-20250705225219-c7e8622e9eef
+
 require (
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect

@@ -28,7 +28,7 @@ func (a *Import) Run(d *Data) (err error) {
 			p.Identity, err = addon.Identity.Get(a.platform.Identity.ID)
 			if err == nil {
 				addon.Activity(
-					"[Import] Using identity (id=%d): %s",
+					"[Import] Using credentials (id=%d): %s",
 					p.Identity.ID,
 					p.Identity.Name)
 			} else {
