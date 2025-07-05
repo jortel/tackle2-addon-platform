@@ -78,6 +78,7 @@ func (a *Generate) generate(
 	gen *api.Generator,
 	templateDir string,
 	assetDir string) (paths []string, err error) {
+	//
 	values, err := a.values(gen)
 	if err != nil {
 		return
@@ -92,9 +93,12 @@ func (a *Generate) generate(
 		}
 	}
 	for name, content := range files {
-		err = a.write(assetDir, name, content)
+		assetPath := path.Join(
+			assetDir,
+			path.Base(name))
+		err = a.write(assetPath, content)
 		if err == nil {
-			paths = append(paths, name)
+			paths = append(paths, assetPath)
 		} else {
 			return
 		}
@@ -102,8 +106,8 @@ func (a *Generate) generate(
 	return
 }
 
-func (a *Generate) write(assetDir, name, content string) (err error) {
-	f, err := os.Create(path.Join(assetDir, name))
+func (a *Generate) write(assetPath, content string) (err error) {
+	f, err := os.Create(assetPath)
 	if err != nil {
 		return
 	}
@@ -136,7 +140,7 @@ func (a *Generate) values(gen *api.Generator) (values api.Map, err error) {
 		return
 	}
 	values = api.Map{
-		"manifest": manifest,
+		"manifest": manifest.Content,
 		"tags":     tags,
 	}
 	return
