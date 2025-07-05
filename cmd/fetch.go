@@ -14,9 +14,14 @@ func (a *Fetch) Run(d *Data) (err error) {
 	if err != nil {
 		return
 	}
-	if a.platform.Identity.ID != 0 {
-
-	}
+	addon.Activity(
+		"[Fetch] Fetch manifest for application (id=%d): %s",
+		a.application.ID,
+		a.application.Name)
+	addon.Activity(
+		"[Fetch] Using platform (id=%d): %s",
+		a.platform.ID,
+		a.platform.Name)
 	var manifest *api.Manifest
 	switch a.platform.Kind {
 	default:
@@ -24,12 +29,15 @@ func (a *Fetch) Run(d *Data) (err error) {
 			URL: a.platform.URL,
 		}
 		if a.platform.Identity.ID != 0 {
-			var idPtr *api.Identity
-			idPtr, err = addon.Identity.Get(a.platform.Identity.ID)
-			if err != nil {
+			p.Identity, err = addon.Identity.Get(a.platform.Identity.ID)
+			if err == nil {
+				addon.Activity(
+					"[Fetch] Using identity (id=%d): %s",
+					p.Identity.ID,
+					p.Identity.Name)
+			} else {
 				return
 			}
-			p.Identity = *idPtr
 		}
 		manifest, err = p.Fetch(&a.application)
 		if err != nil {
@@ -38,5 +46,10 @@ func (a *Fetch) Run(d *Data) (err error) {
 	}
 	manifest.Application.ID = a.application.ID
 	err = addon.Manifest.Create(manifest)
+	if err == nil {
+		addon.Activity(
+			"Manifest (id=%d) created.",
+			manifest.ID)
+	}
 	return
 }

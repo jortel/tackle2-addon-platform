@@ -14,20 +14,48 @@ func (a *Import) Run(d *Data) (err error) {
 	if err != nil {
 		return
 	}
+	addon.Activity(
+		"[Import] Using platform (id=%d): %s",
+		a.platform.ID,
+		a.platform.Name)
 	var list []api.Application
 	switch a.platform.Kind {
 	default:
-		p := cf.Provider{}
+		p := cf.Provider{
+			URL: a.platform.URL,
+		}
+		if a.platform.Identity.ID != 0 {
+			p.Identity, err = addon.Identity.Get(a.platform.Identity.ID)
+			if err == nil {
+				addon.Activity(
+					"[Import] Using identity (id=%d): %s",
+					p.Identity.ID,
+					p.Identity.Name)
+			} else {
+				return
+			}
+		}
 		list, err = p.Find(d.Filter)
 		if err != nil {
 			return
 		}
 	}
+	addon.Activity(
+		"[Import] Found %d applications.",
+		len(list))
 	for _, app := range list {
-		err = addon.Application.Create(&app)
-		if err != nil {
-			return
+		nErr := addon.Application.Create(&app)
+		if nErr == nil {
+			addon.Activity(
+				"[Import] Application: %s, created.",
+				app.Name)
+			continue
 		}
+		addon.Errorf(
+			"warn",
+			"[Import] Application: %s, create failed: %s",
+			app.Name,
+			nErr.Error())
 	}
 	return
 }

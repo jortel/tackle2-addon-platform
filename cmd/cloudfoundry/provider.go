@@ -13,7 +13,7 @@ import (
 
 type Provider struct {
 	URL      string
-	Identity api.Identity
+	Identity *api.Identity
 }
 
 func (p *Provider) Fetch(application *api.Application) (m *api.Manifest, err error) {
@@ -78,12 +78,17 @@ func (p *Provider) Find(filter api.Map) (found []api.Application, err error) {
 }
 
 func (p *Provider) client(spaces ...string) (client *cfp.CloudFoundryProvider, err error) {
-	cfConfig, err := cf.New(
-		p.URL,
-		cf.UserPassword(
-			p.Identity.User,
-			p.Identity.Password),
-		cf.SkipTLSValidation())
+	options := []cf.Option{
+		cf.SkipTLSValidation(),
+	}
+	if p.Identity != nil {
+		options = append(
+			options,
+			cf.UserPassword(
+				p.Identity.User,
+				p.Identity.Password))
+	}
+	cfConfig, err := cf.New(p.URL, options...)
 	if err != nil {
 		return
 	}
