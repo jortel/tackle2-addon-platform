@@ -8,7 +8,6 @@ import (
 	"github.com/konveyor/tackle2-addon-platform/cmd/helm"
 	"github.com/konveyor/tackle2-addon/repository"
 	"github.com/konveyor/tackle2-hub/api"
-	"github.com/konveyor/tackle2-hub/migration/json"
 )
 
 type Files = map[string]string
@@ -41,6 +40,9 @@ func (a *Generate) Run(d *Data) (err error) {
 	if err != nil {
 		return
 	}
+	assetDir := path.Join(
+		AssetDir,
+		a.application.Assets.Path)
 	generators, err := a.generators()
 	if err != nil {
 		return
@@ -57,7 +59,7 @@ func (a *Generate) Run(d *Data) (err error) {
 			return
 		}
 		var names []string
-		names, err = a.generate(gen, templateDir)
+		names, err = a.generate(gen, templateDir, assetDir)
 		if err != nil {
 			return
 		}
@@ -72,7 +74,10 @@ func (a *Generate) Run(d *Data) (err error) {
 	return
 }
 
-func (a *Generate) generate(gen *api.Generator, templateDir string) (paths []string, err error) {
+func (a *Generate) generate(
+	gen *api.Generator,
+	templateDir string,
+	assetDir string) (paths []string, err error) {
 	values, err := a.values(gen)
 	if err != nil {
 		return
@@ -87,7 +92,7 @@ func (a *Generate) generate(gen *api.Generator, templateDir string) (paths []str
 		}
 	}
 	for name, content := range files {
-		err = a.write(name, content)
+		err = a.write(assetDir, name, content)
 		if err == nil {
 			paths = append(paths, name)
 		} else {
@@ -97,8 +102,8 @@ func (a *Generate) generate(gen *api.Generator, templateDir string) (paths []str
 	return
 }
 
-func (a *Generate) write(name, content string) (err error) {
-	f, err := os.Create(path.Join(AssetDir, name))
+func (a *Generate) write(assetDir, name, content string) (err error) {
+	f, err := os.Create(path.Join(assetDir, name))
 	if err != nil {
 		return
 	}
@@ -115,29 +120,24 @@ func (a *Generate) write(name, content string) (err error) {
 	return
 }
 
-func (a *Generate) values(gen *api.Generator) (vMap api.Map, err error) {
-	v := Values{}
+func (a *Generate) values(gen *api.Generator) (values api.Map, err error) {
+	tags := []api.Tag{}
 	for _, ref := range a.application.Tags {
 		var tag *api.Tag
 		tag, err = addon.Tag.Get(ref.ID)
 		if err != nil {
 			return
 		}
-		v.Tags = append(v.Tags, *tag)
+		tags = append(tags, *tag)
 	}
 	mapi := addon.Application.Manifest(a.application.ID)
 	manifest, err := mapi.Get()
 	if err != nil {
 		return
 	}
-	v.Manifest = *manifest
-	b, err := json.Marshal(v)
-	if err != nil {
-		return
-	}
-	err = json.Unmarshal(b, &vMap)
-	if err != nil {
-		return
+	values = api.Map{
+		"manifest": manifest,
+		"tags":     tags,
 	}
 	return
 }
@@ -156,7 +156,7 @@ func (a *Generate) fetchTemplates(gen *api.Generator) (templateDir string, err e
 		identities = append(identities, *gen.Identity)
 	}
 	template, err := repository.New(
-		TemplateDir,
+		templateDir,
 		gen.Repository,
 		identities)
 	if err != nil {
@@ -166,6 +166,9 @@ func (a *Generate) fetchTemplates(gen *api.Generator) (templateDir string, err e
 	if err != nil {
 		return
 	}
+	templateDir = path.Join(
+		templateDir,
+		gen.Repository.Path)
 	return
 }
 
@@ -185,9 +188,4 @@ func (a *Generate) generators() (list []*api.Generator, err error) {
 		}
 	}
 	return
-}
-
-type Values struct {
-	Tags     []api.Tag    `json:"tags"`
-	Manifest api.Manifest `json:"manifest"`
 }
