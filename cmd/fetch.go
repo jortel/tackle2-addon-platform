@@ -9,21 +9,21 @@ type Fetch struct {
 	BaseAction
 }
 
-func (r *Fetch) Run(d *Data) (err error) {
-	var manifest *api.Manifest
-	err = r.setApplication()
+func (a *Fetch) Run(d *Data) (err error) {
+	err = a.setApplication()
 	if err != nil {
 		return
 	}
-	switch r.platform.Kind {
+	var manifest *api.Manifest
+	switch a.platform.Kind {
 	default:
 		p := cf.Provider{}
-		manifest, err = p.Fetch(&r.application)
+		manifest, err = p.Fetch(&a.application)
 		if err != nil {
 			return
 		}
 	}
-	mapi := addon.Application.Manifest(r.application.ID)
-	err = mapi.Get()
+	manifest.Application.ID = a.application.ID
+	err = addon.Manifest.Create(manifest)
 	return
 }

@@ -4,13 +4,12 @@ import (
 	"fmt"
 
 	hp "github.com/konveyor/asset-generation/pkg/providers/generators/helm"
-	"github.com/konveyor/tackle2-hub/api"
 )
 
 type Generator struct {
 }
 
-func (g *Generator) Generate(application *api.Application) (err error) {
+func (g *Generator) Generate(templateDir string) (files map[string]string, err error) {
 	return
 }
 

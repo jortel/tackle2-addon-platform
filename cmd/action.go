@@ -17,6 +17,7 @@ func NewAction(d *Data) (a Action, err error) {
 	case "import":
 		a = &Import{}
 	case "generate":
+		a = &Generate{}
 	default:
 		err = errors.New("action not supported")
 	}

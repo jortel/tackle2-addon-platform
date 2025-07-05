@@ -8,24 +8,19 @@ import (
 	hub "github.com/konveyor/tackle2-hub/addon"
 	"github.com/konveyor/tackle2-hub/api"
 	"github.com/konveyor/tackle2-hub/nas"
-	"k8s.io/utils/env"
 )
 
 var (
-	addon     = hub.Addon
-	SharedDir = ""
-	CacheDir  = ""
-	SourceDir = ""
-	Dir       = ""
-	OptDir    = ""
+	addon       = hub.Addon
+	TemplateDir = ""
+	AssetDir    = ""
+	Dir         = ""
 )
 
 func init() {
 	Dir, _ = os.Getwd()
-	OptDir = path.Join(Dir, "opt")
-	SharedDir = env.GetString(hub.EnvSharedDir, "/tmp/shared")
-	CacheDir = env.GetString(hub.EnvCacheDir, "/tmp/cache")
-	SourceDir = path.Join(SharedDir, "source")
+	TemplateDir = path.Join(Dir, "/templates")
+	AssetDir = path.Join(Dir, "assets")
 }
 
 // Data Addon data passed in the secret.
@@ -42,10 +37,8 @@ type Data struct {
 // main
 func main() {
 	addon.Run(func() (err error) {
-		addon.Activity("OptDir:    %s", OptDir)
-		addon.Activity("SharedDir: %s", SharedDir)
-		addon.Activity("CacheDir:  %s", CacheDir)
-		addon.Activity("SourceDir: %s", SourceDir)
+		addon.Activity("TemplateDir: %s", TemplateDir)
+		addon.Activity("AssetDir: %s", AssetDir)
 		//
 		// Get the addon data associated with the task.
 		d := &Data{}
@@ -55,7 +48,7 @@ func main() {
 		}
 		//
 		// Create directories.
-		for _, dir := range []string{OptDir} {
+		for _, dir := range []string{TemplateDir, AssetDir} {
 			err = nas.MkDir(dir, 0755)
 			if err != nil {
 				return
