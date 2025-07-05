@@ -8,7 +8,10 @@ import (
 	"github.com/konveyor/tackle2-addon-platform/cmd/helm"
 	"github.com/konveyor/tackle2-addon/repository"
 	"github.com/konveyor/tackle2-hub/api"
+	"github.com/konveyor/tackle2-hub/migration/json"
 )
+
+type Files = map[string]string
 
 type Generate struct {
 	BaseAction
@@ -22,14 +25,14 @@ func (a *Generate) Run(d *Data) (err error) {
 	if a.application.Assets == nil {
 		return
 	}
-	assetRp, err := repository.New(
+	assetRepo, err := repository.New(
 		AssetDir,
 		a.application.Assets,
 		a.application.Identities)
 	if err != nil {
 		return
 	}
-	err = assetRp.Fetch()
+	err = assetRepo.Fetch()
 	if err != nil {
 		return
 	}
@@ -38,14 +41,14 @@ func (a *Generate) Run(d *Data) (err error) {
 		return
 	}
 	paths := []string{}
-	for _, generator := range generators {
+	for _, gen := range generators {
 		var templateDir string
-		templateDir, err = a.fetchTemplates(generator)
+		templateDir, err = a.fetchTemplates(gen)
 		if err != nil {
 			return
 		}
 		var names []string
-		names, err = a.generate(generator, templateDir)
+		names, err = a.generate(gen, templateDir)
 		if err != nil {
 			return
 		}
@@ -53,21 +56,25 @@ func (a *Generate) Run(d *Data) (err error) {
 			paths,
 			names...)
 	}
-	err = assetRp.Commit(paths, "Generated.")
+	err = assetRepo.Commit(paths, "Generated.")
 	return
 }
 
-func (a *Generate) generate(generator *api.Generator, templateDir string) (paths []string, err error) {
-	var generated map[string]string
-	switch generator.Kind {
+func (a *Generate) generate(gen *api.Generator, templateDir string) (paths []string, err error) {
+	values, err := a.values(gen)
+	if err != nil {
+		return
+	}
+	var files Files
+	switch gen.Kind {
 	default:
 		h := helm.Generator{}
-		generated, err = h.Generate(templateDir)
+		files, err = h.Generate(templateDir, values)
 		if err != nil {
 			return
 		}
 	}
-	for name, content := range generated {
+	for name, content := range files {
 		var f *os.File
 		f, err = os.Create(path.Join(AssetDir, name))
 		if err != nil {
@@ -82,21 +89,46 @@ func (a *Generate) generate(generator *api.Generator, templateDir string) (paths
 	return
 }
 
-func (a *Generate) fetchTemplates(g *api.Generator) (dir string, err error) {
-	dir = path.Join(
+func (a *Generate) values(gen *api.Generator) (vMap api.Map, err error) {
+	v := Values{}
+	for _, ref := range a.application.Tags {
+		var tag *api.Tag
+		tag, err = addon.Tag.Get(ref.ID)
+		if err != nil {
+			return
+		}
+		v.Tags = append(v.Tags, *tag)
+	}
+	mapi := addon.Application.Manifest(a.application.ID)
+	manifest, err := mapi.Get()
+	if err != nil {
+		return
+	}
+	v.Manifest = *manifest
+	b, err := json.Marshal(v)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(b, &vMap)
+	return
+}
+
+func (a *Generate) fetchTemplates(gen *api.Generator) (templateDir string, err error) {
+	genId := strconv.Itoa(int(gen.ID))
+	templateDir = path.Join(
 		TemplateDir,
-		strconv.Itoa(int(g.ID)))
-	err = os.MkdirAll(dir, 0755)
+		genId)
+	err = os.MkdirAll(templateDir, 0755)
 	if err != nil {
 		return
 	}
 	var identities []api.Ref
-	if g.Identity != nil {
-		identities = append(identities, *g.Identity)
+	if gen.Identity != nil {
+		identities = append(identities, *gen.Identity)
 	}
 	template, err := repository.New(
 		TemplateDir,
-		g.Repository,
+		gen.Repository,
 		identities)
 	if err != nil {
 		return
@@ -116,12 +148,17 @@ func (a *Generate) generators() (list []*api.Generator, err error) {
 			return
 		}
 		for _, p := range arch.Profiles {
-			var g *api.Generator
+			var gen *api.Generator
 			for _, ref = range p.Generators {
-				g, err = addon.Generator.Get(ref.ID)
-				list = append(list, g)
+				gen, err = addon.Generator.Get(ref.ID)
+				list = append(list, gen)
 			}
 		}
 	}
 	return
+}
+
+type Values struct {
+	Tags     []api.Tag    `json:"tags"`
+	Manifest api.Manifest `json:"manifest"`
 }

@@ -18,7 +18,7 @@ func (a *Import) Run(d *Data) (err error) {
 	switch a.platform.Kind {
 	default:
 		p := cf.Provider{}
-		list, err = p.Import(&a.platform, d.Filter)
+		list, err = p.Find(d.Filter)
 		if err != nil {
 			return
 		}

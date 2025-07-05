@@ -12,7 +12,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-replace github.com/konveyor/tackle2-hub => github.com/jortel/tackle2-hub v0.0.0-20250705131920-d954bb70a682
+replace github.com/konveyor/tackle2-hub => github.com/jortel/tackle2-hub v0.0.0-20250705145438-3549277a6e55
 
 require (
 	dario.cat/mergo v1.0.1 // indirect

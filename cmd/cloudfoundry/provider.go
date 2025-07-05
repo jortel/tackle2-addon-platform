@@ -2,6 +2,7 @@ package cloudfoundry
 
 import (
 	"fmt"
+	"path/filepath"
 
 	cf "github.com/cloudfoundry/go-cfclient/v3/config"
 	cfp "github.com/konveyor/asset-generation/pkg/providers/discoverers/cloud_foundry"
@@ -11,18 +12,128 @@ import (
 )
 
 type Provider struct {
+	URL      string
+	Identity api.Identity
 }
 
 func (p *Provider) Fetch(application *api.Application) (m *api.Manifest, err error) {
+	if application.Coordinates == nil {
+		return
+	}
+	coordinates := Coordinates{}
+	err = application.Coordinates.As(&coordinates)
+	if err != nil {
+		return
+	}
+	ref := cfp.AppReference{
+		SpaceName: coordinates.Space,
+		AppName:   coordinates.Name,
+	}
+	client, err := p.client(ref.SpaceName)
+	if err != nil {
+		return
+	}
+	manifest, nErr := client.Discover(ref)
+	if nErr != nil {
+		err = nErr
+		return
+	}
+	m = &api.Manifest{}
+	m.Content = manifest.Content
+	m.Secret = manifest.Secret
 	return
 }
 
-func (p *Provider) Import(platform *api.Platform, filter api.Map) (found []api.Application, err error) {
+func (p *Provider) Find(filter api.Map) (found []api.Application, err error) {
+	f := Filter{}
+	err = filter.As(&f)
+	if err != nil {
+		return
+	}
+	client, err := p.client(f.Spaces...)
+	if err != nil {
+		return
+	}
+	spaces, err := client.ListApps()
+	if err != nil {
+		return
+	}
+	for space, applications := range spaces {
+		if !f.MatchSpace(space) {
+			continue
+		}
+		for _, ref := range applications {
+			appRef, cast := ref.(cfp.AppReference)
+			if !cast {
+				continue
+			}
+			if !f.MatchName(appRef.AppName) {
+				continue
+			}
+			r := api.Application{}
+			r.Name = appRef.AppName
+			found = append(found, r)
+		}
+	}
 	return
 }
+
+func (p *Provider) client(spaces ...string) (client *cfp.CloudFoundryProvider, err error) {
+	cfConfig, err := cf.New(
+		p.URL,
+		cf.UserPassword(
+			p.Identity.User,
+			p.Identity.Password),
+		cf.SkipTLSValidation())
+	if err != nil {
+		return
+	}
+	pConfig := &cfp.Config{
+		CloudFoundryConfig: cfConfig,
+		SpaceNames:         spaces,
+	}
+	client, err = cfp.New(pConfig, &addon.Log)
+	if err != nil {
+		return
+	}
+	return
+}
+
+type Coordinates struct {
+	Space string `json:"space"`
+	Name  string `json:"name"`
+}
+
+type Filter struct {
+	Spaces []string `json:"spaces"`
+	Names  []string `json:"names"`
+}
+
+func (f *Filter) MatchSpace(name string) (match bool) {
+	for _, pattern := range f.Spaces {
+		match, _ = filepath.Match(pattern, name)
+		if match {
+			break
+		}
+	}
+	return
+}
+
+func (f *Filter) MatchName(name string) (match bool) {
+	for _, pattern := range f.Names {
+		match, _ = filepath.Match(pattern, name)
+		if match {
+			break
+		}
+	}
+	return
+}
+
+//
+//
 
 func (p *Provider) Test() (err error) {
-	provider, err := p.provider()
+	provider, err := p.testProvider()
 	if err != nil {
 		return
 	}
@@ -57,7 +168,7 @@ func (p *Provider) Test() (err error) {
 	return
 }
 
-func (p *Provider) provider() (provider *cfp.CloudFoundryProvider, err error) {
+func (p *Provider) testProvider() (provider *cfp.CloudFoundryProvider, err error) {
 	user := "admin"
 	password := "dtuqBCRms14buxCnCVy2J7g2n8GVHs"
 	cfConfig, err := cf.New(
