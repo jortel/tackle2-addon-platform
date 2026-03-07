@@ -467,7 +467,7 @@ func (a *Generate) cloneTemplates(gen *api.Generator) (templateDir string, err e
 	}
 	var identity *api.Identity
 	if gen.Identity != nil {
-		identity, err = addon.Identity.Get(gen.Identity.ID)
+		identity, err = addon.Identity.Decrypted().Get(gen.Identity.ID)
 		if err != nil {
 			err = wrap(err)
 			return
@@ -567,10 +567,10 @@ func (a *Generate) manifest() (redacted, manifest *api.Manifest, err error) {
 		}
 		return
 	}
-	manifest, err = addon.Manifest.Get(
-		redacted.ID,
-		binding.Param{Key: api.Injected, Value: "1"},
-		binding.Param{Key: api.Decrypted, Value: "1"})
+	manifest, err = addon.Manifest.
+		Decrypted().
+		Injected().
+		Get(redacted.ID)
 	if err != nil {
 		return
 	}
