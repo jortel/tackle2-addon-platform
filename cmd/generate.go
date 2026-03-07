@@ -561,7 +561,10 @@ func (a *Generate) tags() (tags []string, err error) {
 // manifest returns the application manifest.
 // fallback: A file named: manifest.yaml in the source repository.
 func (a *Generate) manifest() (redacted, manifest *api.Manifest, err error) {
-	redacted, err = addon.Application.Select(a.application.ID).Manifest.Get()
+	redacted, err = addon.Application.
+		Select(a.application.ID).
+		Manifest.
+		Get()
 	if err != nil {
 		if errors.Is(err, &binding.NotFound{}) {
 			redacted, err = a.userManifest()
