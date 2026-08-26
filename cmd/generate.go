@@ -674,7 +674,7 @@ func (v *Values) with(a *api.Application, m *api.Manifest, tags []string) {
 		app.BusinessService = a.BusinessService.Name
 	}
 	app.Repository = a.Repository
-	app.AssetRepository = a.Repository
+	app.AssetRepository = a.Assets
 	app.Binary = a.Binary
 	v.Manifest = m.Content
 	v.Tags = tags
