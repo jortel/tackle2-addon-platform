@@ -85,8 +85,8 @@ github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/konveyor/asset-generation v0.2.2 h1:bzg4wDO3M4NxayS3b7SKk0f6Ai2MP/mioCZozhphKfw=
 github.com/konveyor/asset-generation v0.2.2/go.mod h1:X5K2VuEV+PEBAI5O+9mNVDtCW4vFWDvFYRThpea+56U=
-github.com/konveyor/tackle2-hub/shared v0.0.0-20260901160248-e68bb1e413f9 h1:DFoTjiDFz8V5FNnkCiIue1Y+NjxkePxTU79sWIWHtP8=
-github.com/konveyor/tackle2-hub/shared v0.0.0-20260901160248-e68bb1e413f9/go.mod h1:DBpy7S/qWyOmxK9QaqiHUHKkQ3gMRXXnEY8/FsA6fgA=
+github.com/konveyor/tackle2-hub/shared v0.0.0-20260904131632-98e6f1ae6a5f h1:2lCJgxe8MWwChnn5sPHIwuiPS0supeV1UtbwOzdUQgE=
+github.com/konveyor/tackle2-hub/shared v0.0.0-20260904131632-98e6f1ae6a5f/go.mod h1:DBpy7S/qWyOmxK9QaqiHUHKkQ3gMRXXnEY8/FsA6fgA=
 github.com/kr/pretty v0.2.1/go.mod h1:ipq/a2n7PKx3OHsz4KJII5eveXtPO4qwEXGdVfWzfnI=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
