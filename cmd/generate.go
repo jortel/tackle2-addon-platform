@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"io"
 	"net/url"
 	"os"
 	"path"
@@ -100,6 +101,9 @@ func (a *Generate) Run(d *Data) (err error) {
 	if err != nil {
 		return
 	}
+	addon.Activity(
+		"[Generate] Matched generator count=%d",
+		len(generators))
 	for _, gen := range generators {
 		addon.Activity(
 			"[Generate] Using generator (id=%d): %s.",
@@ -626,11 +630,16 @@ func (a *Generate) codeManifest() (manifest *api.Manifest, err error) {
 	}()
 	decoder := yaml.NewDecoder(f)
 	err = decoder.Decode(&manifest.Content)
-	if err == nil {
-		addon.Activity(
-			"[Generate] Using manifest at: %s",
-			file)
+	if errors.Is(err, io.EOF) {
+		err = nil
 	}
+	if err != nil {
+		err = wrap(err)
+		return
+	}
+	addon.Activity(
+		"[Generate] Using manifest at: %s",
+		file)
 	return
 }
 
